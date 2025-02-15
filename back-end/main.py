@@ -2,13 +2,12 @@ import logging
 import os
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, status, HTTPException
 from google.cloud import bigquery
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
 from langchain_google_vertexai import ChatVertexAI
 from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import status
 from pydantic import BaseModel
 
 
@@ -37,8 +36,8 @@ def generate_response(question: str,
     context = "\n".join([f"Answer: {q['body']}" for q in stackoverflow_results])
     
     messages = [
-        SystemMessage(content="You are an AI assistant that answers programming questions using Stack Overflow data."),
-        HumanMessage(content=f"User asked: {question}\nHere are some relevant Stack Overflow answers:\n{context}\nProvide a concise and accurate response.")
+        SystemMessage(content=f"You are an AI assistant that answers programming questions using Stack Overflow data.\nHere are some Stack Overflow answers:\n'{context}'"),
+        HumanMessage(content=f"User asked: '{question}'\nProvide a concise and accurate response. If the question isn't programming related, tell the User to make one.")
     ]
     
     return llm(messages)
@@ -76,7 +75,7 @@ async def post_ask(question_request: Question):
         return {"answer": response.content}
     except Exception as e:
         logging.exception(str(e))
-        return {"error": "Unable to process question at this time."}, status.HTTP_500_INTERNAL_SERVER_ERROR
+        raise HTTPException({"error": "Unable to process question at this time."}, status_code=500)
 
 if __name__=="__main__":
     uvicorn.run(app, port=8080)
