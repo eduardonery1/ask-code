@@ -1,7 +1,9 @@
 'use client'
+
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useState, useRef } from 'react';
+import Markdown from 'react-markdown';
 
 let url = process.env.SERVER_HOST || "http://localhost:8080/ask"
 
@@ -13,13 +15,13 @@ function SystemMessage({ content }){
 	for (let i = 0; i < parts.length; i++) {
 		if (i % 2 === 0) {
 			// Regular text
-			formattedContent.push(<span key={i}>{parts[i]}</span>);
+			formattedContent.push(<Markdown key={i}>{parts[i]}</Markdown>);
 		} else {
 			// Code block
 			const code = parts[i];
 			let idx = code.search("\n"); //First space is after the language
 			let language = code.substr(0, idx);
-			console.log(language)
+
 			formattedContent.push(
 				<SyntaxHighlighter language={language} style={vscDarkPlus} key={i} className="rounded-lg">
 					{code.substr(idx+1)}
@@ -27,9 +29,10 @@ function SystemMessage({ content }){
 			);
 		}
 	}
+
 	return (
 		<div className="flex justify-start items-start gap-2">
-			<div className="bg-blue-900 p-1 rounded-lg min-w-[30%] max-w-[80%] break-words overflow-y-auto text-white">
+			<div className="bg-gray-800 p-2 rounded-lg min-w-[30%] max-w-[80%] break-words overflow-y-auto text-white">
 				{formattedContent}
 			</div>
 		</div>
@@ -52,7 +55,7 @@ function MessagesList({ messages }){
 			{	
 				messages.map(
 					(message, index) => (message.sender === "system")? <SystemMessage key={index} content={message.content}/> 
-														      : <UserMessage key={index} content={message.content}/>
+									      							 : <UserMessage key={index} content={message.content}/>
 				)
 			}
 	</div>
@@ -75,7 +78,6 @@ function MessageBox({ setMessages, messages }){
 		});
 
 		let data = await response.json();
-		//console.log(data, data.answer, data.content);
 		newMessageList.push({"sender": "system", "content": data.answer});
 		setMessages([...newMessageList]);
 	}; 
