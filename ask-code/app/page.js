@@ -1,36 +1,60 @@
 'use client'
-
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useState, useRef } from 'react';
 
 let url = process.env.SERVER_HOST || "http://localhost:8080/ask"
 
-function Message({ message }){
-	let isSystem = message.sender ==="system";
-	let outter_class = (isSystem)? " justify-start items-start left-0 " : " justify-end items-end";
-	let inner_class = (isSystem)? " bg-blue-500 " : " bg-blue-700 ";
-	let regex = "```";
-	let parts = message.content.split(regex);
+function SystemMessage({ content }){
+	let codeDelimiter = "```";
+	const parts = content.split(codeDelimiter);
+	let formattedContent = [];
 
+	for (let i = 0; i < parts.length; i++) {
+		if (i % 2 === 0) {
+			// Regular text
+			formattedContent.push(<span key={i}>{parts[i]}</span>);
+		} else {
+			// Code block
+			const code = parts[i];
+			let idx = code.search("\n"); //First space is after the language
+			let language = code.substr(0, idx);
+			console.log(language)
+			formattedContent.push(
+				<SyntaxHighlighter language={language} style={vscDarkPlus} key={i} className="rounded-lg">
+					{code.substr(idx+1)}
+				</SyntaxHighlighter>
+			);
+		}
+	}
 	return (
-		<div className={"flex " + outter_class + "bg-grey-500 gap-2"}>
-			<div className={inner_class + "p-2 min-w-[30%] max-w-[50%] break-words overflow-y-auto text-white rounded-lg "}>
-				{parts.map((part, index) => {
-					if (index % 2 === 0) {
-						return (<span key={index}>{part}</span>);
-					} else {
-						return (<code key={index}>{part}</code>);
-					}
-				})}
+		<div className="flex justify-start items-start gap-2">
+			<div className="bg-blue-900 p-1 rounded-lg min-w-[30%] max-w-[80%] break-words overflow-y-auto text-white">
+				{formattedContent}
 			</div>
 		</div>
 	);
 }
 
+function UserMessage({ content }){
+	return (
+		<div className="flex justify-end items-end bg-grey-500 gap-2 m-2">
+			<div className="bg-blue-600 p-2 min-w-[30%] max-w-[60%] break-words overflow-y-auto text-white rounded-lg ">
+				{content}
+			</div>
+		</div>
+	);
+}
 
-function MessagesList(props){
+function MessagesList({ messages }){
 	return (
 	<div className="p-8 overflow-auto bg-gray-900 w-full h-[80vh] sm:h-[90vh] flex-col justify-center overflow-auto gap-2">
-			{props.messages.map((message, index) => <Message key={index} message={message}/>)}
+			{	
+				messages.map(
+					(message, index) => (message.sender === "system")? <SystemMessage key={index} content={message.content}/> 
+														      : <UserMessage key={index} content={message.content}/>
+				)
+			}
 	</div>
 	);
 }
