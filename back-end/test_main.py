@@ -21,7 +21,7 @@ class TestMain(unittest.TestCase):
         self.assertEqual(res, exp_result)
 
     def test_post_ask(self):
-        response = self.client.post("/ask", params={"question": "How to install pip?"})
+        response = self.client.post("/ask", json={"question": "How to install numpy?"})
         self.assertEqual(response.status_code, 200)
 
 

@@ -14,11 +14,18 @@ function Message({ message }){
 	return (
 		<div className={"flex " + outter_class + "bg-grey-500 gap-2"}>
 			<div className={inner_class + "p-2 min-w-[30%] max-w-[50%] break-words overflow-y-auto text-white rounded-lg "}>
-				{parts.filter().map()}
+				{parts.map((part, index) => {
+					if (index % 2 === 0) {
+						return (<span key={index}>{part}</span>);
+					} else {
+						return (<code key={index}>{part}</code>);
+					}
+				})}
 			</div>
 		</div>
 	);
 }
+
 
 function MessagesList(props){
 	return (

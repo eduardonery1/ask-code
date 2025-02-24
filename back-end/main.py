@@ -10,8 +10,8 @@ from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-
 load_dotenv()
+
 if bool(os.getenv("DEBUG")):
     logging.basicConfig(level=logging.DEBUG, filemode="w", filename="log.txt")
 else:
@@ -21,7 +21,7 @@ app = FastAPI()
 
 app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  
+        allow_origins=["http://localhost:3000"],  
         allow_credentials=True,
         allow_methods=["*"],  # Allow all HTTP methods
         allow_headers=["*"],  # Allow all headers
