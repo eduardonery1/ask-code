@@ -14,9 +14,11 @@ from pydantic import BaseModel
 load_dotenv()
 
 if bool(os.getenv("DEBUG")):
-    logging.basicConfig(level=logging.DEBUG, filemode="w", filename="log.txt")
+    level = logging.DEBUG 
 else:
-    logging.basicConfig(level=logging.INFO)
+    level = logging.INFO 
+
+logging.basicConfig(level=level, filemode="w", filename="log.txt")
 
 app = FastAPI()
 
@@ -29,23 +31,28 @@ app.add_middleware(
 )
 
 bq_client = bigquery.Client()
-llm = ChatVertexAI(model="gemini-1.5-flash-001")
-
+llm = ChatVertexAI(model="gemini-2.0-flash-001")
 
 def generate_response(question: str,
                       stackoverflow_results: List[Dict[str, str]]
                       ) -> AIMessage:
     context = "\n".join(
-        [f"Answer: {q['body']}" for q in stackoverflow_results])
+        [f"Answer: {q['body']}" for q in stackoverflow_results]
+    )
+
+    if len(context) > 2048:
+        context = context[:2048]
 
     messages = [
         SystemMessage(
             content=f"You are an AI assistant that answers programming questio\
                     ns using Stack Overflow data.\nHere are some Stack Overflo\
-                    w answers:\n'{context}'"), HumanMessage(
+                    w answers:\n'{context}'"), 
+        HumanMessage(
             content=f"User asked: '{question}'\nProvide a concise and accurate\
                      response. If the question isn't programming related, tell\
-                     the User to make one.")]
+                     the User to make one.")
+    ]
 
     return llm.invoke(messages)
 
@@ -77,13 +84,10 @@ async def post_ask(question_request: Question):
     try:
         logging.debug(question)
         query_res = query(question)
-        # query_res = list(map(lambda row: {"body": row["body"]}, query_res))
-        logging.info(f"Decoded results: {query_res}")
         response = generate_response(question, query_res)
-        logging.info(f"Generated reponse: {response.content}")
         return {"answer": response.content}
     except Exception as e:
-        logging.exception(str(e))
+        logging.exception(repr(e))
         raise HTTPException(
             {"error": "Unable to process question at this time."},
             status_code=500
